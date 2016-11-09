@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source /env/org
-
-`make -C /org/ run`

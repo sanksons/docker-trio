@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source /env/styloko
-
-`make -C /styloko/ run`
