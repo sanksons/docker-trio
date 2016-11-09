@@ -1,0 +1,13 @@
+{
+   "Hello":{  
+      "ResponseHeaders":{  
+         "CacheControl":{  
+            "ResponseType":"public",
+            "NoCache":false,
+            "NoStore":false,
+            "MaxAgeInSeconds":300
+         }
+      }
+   }
+}
+

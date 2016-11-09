@@ -1,0 +1,45 @@
+{
+    "AppName": "catalog",
+    "AppVersion": "1.0.0",
+    "ServerPort": "8084",
+    "LogConfFile": "conf/logger.json",
+    "MonitorConfig": {
+        "AppName": "styloko",
+        "Platform": "DatadogAgent",
+        "AgentServer": "datadog:8125",
+        "Verbose": false,
+        "Enabled": false,
+        "MetricsServer": "datadog:8065"
+    },
+    "Performance": {
+        "UseCorePercentage": 100,
+        "GCPercentage": 1000
+    },
+    "HttpConfig": {
+        "MaxConn": 10000,
+        "MaxIdleConns": 2000,
+        "ResponseHeaderTimeout": 300,
+        "DisableKeepAlives": false
+    },
+    "ResponseHeaders": {
+        "CacheControl": {
+            "ResponseType": "public",
+            "NoCache": false,
+            "NoStore": false,
+            "MaxAgeInSeconds": 150
+        },
+        "CacheStrategyConfig": {
+            "Strategy": "dbFirstStrategy",
+            "DBAdapterType": "sample",
+            "Cache": {
+                "Platform": "centralCache",
+                "Host": "http://blitz:8080/cache/api/v1/buckets",
+                "KeyPrefix": "default"
+            },
+            "ThreadPool": {
+                "NThreads": 5,
+                "TaskQueueSize": 10
+            }
+        }
+    }
+}

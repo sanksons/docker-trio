@@ -1,0 +1,13 @@
+package search
+
+const (
+	DEFAULT_VISIBILITY = "none"
+	DEFAULT_EXPANSE    = "Large"
+	QUERY_TYPE_EXACT   = "exact"
+	QUERY_TYPE_FILTER  = "filter"
+
+	CACHE_DATA  = "CACHEDATA"
+	QUERY       = "QUERY"
+	PRODUCTDATA = "PRODUCTDATA"
+	QUERY_TYPE  = "QUERY-TYPE"
+)

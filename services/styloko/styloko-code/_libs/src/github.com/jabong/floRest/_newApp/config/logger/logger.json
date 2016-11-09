@@ -1,0 +1,19 @@
+{
+    "ProfilerEnabled": true,
+    "LogLevel": {LOGLEVEL},
+    "DefaultLogType": "fileLoggerDefault",
+    "AppName" : "newApp-",
+    "FormatType" : "json",
+    "FileLogger": [
+        {
+            "Key": "fileLoggerDefault",
+            "Path": "/var/log/newApp/",
+            "FileNamePrefix": "api-"       
+        },
+        {
+            "Key": "cacheError",
+            "Path": "/var/log/newApp/",
+            "FileNamePrefix": "api-cache-"            
+        }        
+    ]
+}

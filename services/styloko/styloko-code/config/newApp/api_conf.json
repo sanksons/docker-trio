@@ -1,0 +1,125 @@
+{
+  "Cache": {
+    "Platform": "centralCache",
+    "Host": "http://blitz:2196",
+    "KeyPrefix": "cache/api/v1/buckets/styloko",
+    "Disabled": false,
+    "TimeOut": 1000
+  },
+  "Org": {
+    "Host": "http://org:8083",
+    "Path": "/org/v1",
+    "Timeout": 2000
+  },
+  "CCapi": {
+    "Host": "http://ccapi:80",
+    "Path": "/ccapi",
+    "Username": "",
+    "Password": "",
+    "Timeout": 100
+  },
+  "Boutique": {
+    "External": {
+      "Host": "http://boutique:8082",
+      "Path": "/catalog/v1",
+      "Timeout": 100
+    },
+    "Internal": {
+      "Host": "http://boutique:8081",
+      "Path": "/catalog/internal/v1",
+      "Timeout": 100
+    }
+  },
+  "JBus": {
+    "URL": "http://jabongbus:8087/omnibus",
+    "Publisher": "catalog",
+    "RoutingKey": ".erp."
+  },
+  "Bootstrap": {
+    "WorkerCount": "100",
+    "QueueSize": "1000"
+  },
+  "ProductSyncing": {
+    "MaxRoutines": "25",
+    "SleepTime": "10",
+    "MarkQCDown": "false"
+  },
+  "DbAdapter": "Mongo",
+  "ResponseHeaders": {
+    "CacheControl": {
+      "ResponseType": "public",
+      "NoCache": false,
+      "NoStore": false,
+      "MaxAgeInSeconds": 150
+    }
+  },
+  "Redis": {
+    "Styloko": {
+      "Host": "REDIS_HOSTS",
+      "Password": "REDIS_PASSWORD",
+      "PoolSize": 25
+    },
+    "Stock": {
+      "Host": "REDIS_STOCK_HOSTS",
+      "Password": "REDIS_STOCK_PASSWORD",
+      "PoolSize": 25
+    }
+  },
+  "MySqlConfig": {
+    "Master": {
+      "Username": "MASTER_USERNAME",
+      "Password": "MASTER_PASSWORD",
+      "Host": "MASTER_HOST",
+      "Port": "3306",
+      "Dbname": "MASTER_DBNAME",
+      "Timezone": "Asia/Kolkata",
+      "MaxOpenCon": 0,
+      "MaxIdleCon": 0
+    },
+    "Slave": {
+      "Username": "SLAVE_USERNAME",
+      "Password": "SLAVE_PASSWORD",
+      "Host": "SLAVE_HOST",
+      "Port": "3306",
+      "Dbname": "SLAVE_DBNAME",
+      "Timezone": "Asia/Kolkata",
+      "MaxOpenCon": 0,
+      "MaxIdleCon": 0
+    }
+  },
+  "MongoDbConfig": {
+    "Url": "MONGO_CONNECTION_URL",
+    "DbName": "MONGO_DBNAME"
+  },
+  "ProductConLimit": 20,
+  "Datadog": {
+    "APIKey": "239cb79c7f1afddb0f60e7363ce0c53a",
+    "AppKey": "735d8dbb85bc4b38eb9486c2ef9812f2c5a38e36"
+  },
+  "NotifAddr": "NOTIF_ADDR",
+  "AutoSequencing": true,
+  "JudgeDaemon": {
+    "ApiUrl": "http://styloko:8084/catalog/v1/products",
+    "ChunkSize": 40,
+    "Timeout": "20000ms",
+    "RunEveryJob": "1m",
+    "RunCleanupJob": "168h",
+    "RunResetJob": "10m"
+  },
+  "ProductSellerUpdate":false,
+  "SellerSkuLimit":100,
+  "Sellers":{
+        "16503": "Wearhouse Products Private Limited",
+        "16505": "Ravenna Fashion Private Limited",
+        "16507": "Bren Trading Private Limited"
+      },
+  "BrandsProcTime":{
+      "1988": "18",
+      "5169": "21",
+      "6410": "18",
+      "7152": "21",
+      "7155": "21",
+      "7151": "21",
+      "7154": "21"
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "aggregator",
+  "version": "1.0.0",
+  "description": "Styloko response mapper for Boutique requests",
+  "main": "aggregator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node aggregator.js"
+  },
+  "keywords": [
+    "aggregator",
+    "styloko",
+    "boutique"
+  ],
+  "author": "Ishaan Bahal",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "compression": "^1.6.2",
+    "express": "^4.14.0",
+    "ioredis": "^2.2.0",
+    "node-uuid": "^1.4.7",
+    "promise": "^7.1.1"
+  }
+}

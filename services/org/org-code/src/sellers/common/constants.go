@@ -1,0 +1,23 @@
+package common
+
+const (
+	SELLERS              = "SELLERS"
+	ORG                  = "org"
+	SELLERS_COLLECTION   = "sellers"
+	SELLER_INSERT        = "SELLER_INSERT"
+	SELLER_UPDATE        = "SELLER_UPDATE"
+	MONGO_SYNC_INSERT    = "MONGO_SYNC_INSERT"
+	MONGO_SEARCH         = "MONGO_SEARCH"
+	MONGO_CHK_KEY_EXISTS = "MONGO_CHK_KEY_EXISTS"
+	MONGO_INSERT         = "MONGO_INSERT"
+	COMMISSSIONS         = "COMMISSIONS"
+	MONGO_GET            = "MONGO_GET"
+	SYNC                 = "SYNC"
+)
+
+// Datadog constants
+const (
+	CUSTOM_SELLER_GET_ONE    = "_CUSTOM_SELLER_GET_ONE_"
+	CUSTOM_SELLER_GET_ALL    = "_CUSTOM_SELLER_GET_ALL_"
+	CUSTOM_SELLER_GET_SEARCH = "_CUSTOM_SELLER_GET_SEARCH_"
+)

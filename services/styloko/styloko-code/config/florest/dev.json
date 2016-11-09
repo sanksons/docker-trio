@@ -1,0 +1,18 @@
+{
+    "AppName": "catalog",
+    "AppVersion": "1.0.0",
+    "ServerPort": "8080",
+    "LogConfFile": "conf/logger.json",
+    "MonitorConfig": {
+        "AppName": "catalog",
+        "Platform": "DatadogAgent",
+        "AgentServer": "datadog:8125",
+        "Verbose": false,
+        "Enabled": false,
+        "MetricsServer": "datadog:8065"
+    },
+    "Performance": {
+        "UseCorePercentage": 100,
+        "GCPercentage": 1000
+    }
+}

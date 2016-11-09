@@ -1,0 +1,384 @@
+package common
+
+import (
+	"common/ResourceFactory"
+	"common/appconfig"
+	"common/utils"
+	"encoding/json"
+	"errors"
+	"fmt"
+<<<<<<< HEAD
+	"strings"
+
+	"github.com/jabong/floRest/src/common/utils/logger"
+=======
+	"github.com/jabong/floRest/src/common/config"
+	"github.com/jabong/floRest/src/common/utils/http"
+	"github.com/jabong/floRest/src/common/utils/logger"
+	"strconv"
+	"strings"
+	"time"
+>>>>>>> origin/CIRelease
+)
+
+//This function accepts a []map[string]interface{} and depending on the command attached,
+//calls the InsertInMysql or UpdateInMysql,
+func SyncWithMysql(dataMap interface{}) error {
+	dataMapArr := dataMap.([]map[string]interface{})
+	data, err := utils.ConvertStructArrToMapArr(dataMapArr[0]["data"])
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while converting data []struct to []map[string]interface{} :%s", err.Error()))
+		return err
+	}
+	command := dataMapArr[0]["command"]
+	for _, v := range data {
+		suppId, suppCol, suppVal := getCatalogSupplierQuery(v)
+		addrCol, addrVal := getSupplierAddressQuery(v)
+		countryVal := getCountryQuery(v)
+		if command == SELLER_INSERT {
+			err := InsertInMysql(suppId, suppCol, suppVal, addrCol, addrVal, countryVal)
+			if err != nil {
+				logger.Error(fmt.Sprintf("Error while inserting in MySql :%s", err.Error()))
+				return err
+			}
+		}
+		if command == SELLER_UPDATE {
+			err := UpdateInMysql(suppId, suppCol, suppVal, addrCol, addrVal, countryVal)
+			if err != nil {
+				logger.Error(fmt.Sprintf("Error while updating in MySql :%s", err.Error()))
+				return err
+			}
+		}
+	}
+	logger.Info("SYNC DONE.")
+	return nil
+}
+
+//This function inserts the correctly inserted seller details into respective columns in mysql
+func InsertInMysql(suppId int, suppCol string, suppVal string, addrCol string, addrVal string, countryVal string) error {
+	driver, errs := ResourceFactory.GetMySqlDriver(SELLER_INSERT)
+	if errs != nil {
+		logger.Error(fmt.Sprintf("Couldn't acquire mysql resource. Error: %s", errs.Error()))
+		return errs
+	}
+	txObj, err := driver.GetTxnObj()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while getting transaction object: %s", err.DeveloperMessage))
+		return errors.New("Error while getting transaction object")
+	}
+
+	completeFlag := false
+	defer func() {
+		if !completeFlag {
+			logger.Error("Transaction has failed probably due to panic. Rollback begins.")
+			txObj.Rollback()
+		}
+	}()
+
+	catSupSql := getInsertCatalogSupplierQuery(suppCol, suppVal)
+	logger.Info(fmt.Sprintf("catalog_supplier sql being fired:%s", catSupSql))
+	r, er := txObj.Exec(catSupSql)
+	if er != nil {
+		logger.Error(fmt.Sprintf("Error while executing catalog supplier query %s", er.Error()))
+		return er
+	}
+	//execute and get last inserted id
+	supInsId, _ := r.LastInsertId()
+	countrySql := getInsertCountryQuery(countryVal)
+	logger.Info(fmt.Sprintf("country sql being fired:%s", countrySql))
+	res, e := txObj.Exec(countrySql)
+	if e != nil {
+		logger.Error(fmt.Sprintf("Error while executing country query %s", e.Error()))
+		return e
+	}
+	//execute and get last inserted id
+	countryInsId, _ := res.LastInsertId()
+	supAddrSql := getInsertSupplierAddressQuery(addrCol, addrVal, supInsId, countryInsId)
+	logger.Info(fmt.Sprintf("supplier_address sql being fired:%s", supAddrSql))
+	_, serr := txObj.Exec(supAddrSql)
+	if serr != nil {
+		logger.Error(fmt.Sprintf("Error while executing supplier address query %s", serr.Error()))
+		return serr
+	}
+	cerr := txObj.Commit()
+	if cerr != nil {
+		txObj.Rollback()
+	}
+	completeFlag = true
+	return nil
+}
+
+//This function updates the correctly updated seller details into respective columns in mysql
+func UpdateInMysql(suppId int, suppCol string, suppVal string, addrCol string, addrVal string, countryVal string) error {
+	driver, derr := ResourceFactory.GetMySqlDriver(SELLER_UPDATE)
+	if derr != nil {
+		logger.Error(fmt.Sprintf("Couldn't acquire mysql resource. Error: %s", derr.Error()))
+		return derr
+	}
+	txObj, err := driver.GetTxnObj()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while getting transaction object: %s", err.DeveloperMessage))
+		return errors.New("Error while getting transaction object")
+	}
+
+	completeFlag := false
+	defer func() {
+		if !completeFlag {
+			logger.Error("Transaction has failed probably due to panic. Rollback begins.")
+			txObj.Rollback()
+		}
+	}()
+
+	catSupSql := getUpdateCatalogSupplierQuery(suppCol, suppVal, suppId)
+	logger.Info(fmt.Sprintf("catalog_supplier sql being fired:%s", catSupSql))
+	_, er := txObj.Exec(catSupSql)
+	if er != nil {
+		logger.Error(fmt.Sprintf("Error while executing catalog supplier query %s", er.Error()))
+		return er
+	}
+	supAddrSql := getUpdateSupplierAddressQuery(addrCol, addrVal, suppId)
+	logger.Info(fmt.Sprintf("supplier_address sql being fired:%s", supAddrSql))
+	_, e := txObj.Exec(supAddrSql)
+	if e != nil {
+		logger.Error(fmt.Sprintf("Error while executing supplier address query %s", e.Error()))
+		return e
+	}
+	countryIdSql := getCountryIdQuery(suppId)
+	logger.Info(fmt.Sprintf("country id sql being fired:%s", countryIdSql))
+	rows, rerr := txObj.Query(countryIdSql)
+	if rerr != nil {
+		logger.Error(fmt.Sprintf("Error while executing countryId query:%s", rerr.Error()))
+		rows.Close()
+		return rerr
+	}
+	var countryId int
+	for rows.Next() {
+		serr := rows.Scan(&countryId)
+		if serr != nil {
+			logger.Error(fmt.Sprintf("Error while scanning fk_country:%s", serr.Error()))
+			rows.Close()
+			return serr
+		}
+		rows.Close()
+	}
+	//checking if fk_country exists for the supplierId
+	if countryId != 0 {
+		countrySql := getUpdateCountryQuery(countryVal, countryId)
+		logger.Info(fmt.Sprintf("country sql being fired:%s", countrySql))
+		_, errs := txObj.Exec(countrySql)
+		if errs != nil {
+			logger.Error(fmt.Sprintf("Error while executing supplier address query %s", errs.Error()))
+			return errs
+		}
+	}
+	serr := txObj.Commit()
+	if serr != nil {
+		txObj.Rollback()
+	}
+
+	completeFlag = true
+	return nil
+}
+
+//This generates the sql for supplier_address table insertions
+func getSupplierAddressQuery(dataMap map[string]interface{}) (string, string) {
+	var addressColumns string
+	var addressValues string
+	if val, ok := dataMap["addr1"]; ok {
+		addressColumns = fmt.Sprintf("%s,%s", addressColumns, "street")
+		addressValues = fmt.Sprintf("%s,\"%s\"", addressValues, val)
+	}
+	if val, ok := dataMap["addr2"]; ok {
+		addressColumns = fmt.Sprintf("%s,%s", addressColumns, "street_number")
+		addressValues = fmt.Sprintf("%s,\"%s\"", addressValues, val)
+	}
+	if val, ok := dataMap["city"]; ok {
+		addressColumns = fmt.Sprintf("%s,%s", addressColumns, "city")
+		addressValues = fmt.Sprintf("%s,\"%s\"", addressValues, val)
+	}
+	if val, ok := dataMap["pstcode"]; ok {
+		addressColumns = fmt.Sprintf("%s,%s", addressColumns, "postcode")
+		addressValues = fmt.Sprintf("%s,%d", addressValues, int(val.(float64)))
+	}
+	addressColumns = fmt.Sprintf("%s,%s", addressColumns, "updated_at")
+	addressValues = fmt.Sprintf("%s,%s", addressValues, `NOW()`)
+	addressColumns = cleanUp(addressColumns)
+	addressValues = cleanUp(addressValues)
+	return addressColumns, addressValues
+}
+
+//This generates the sql for insertion in catalog_supplier table in mysql
+func getCatalogSupplierQuery(dataMap map[string]interface{}) (int, string, string) {
+	var supplierColumns string
+	var supplierValues string
+	var supplierId int
+	if val, ok := dataMap["seqId"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "id_catalog_supplier")
+		supplierValues = fmt.Sprintf("%s,%d", supplierValues, int(val.(float64)))
+		supplierId = int(val.(float64))
+	}
+	if val, ok := dataMap["ordrEml"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "order_email")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["orgName"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "name_en")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["slrName"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "name")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["phn"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "phone")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["ccEmail"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "customercare_email")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["ccName"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "customercare_contact")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["ccPhone"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "customercare_phone")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	if val, ok := dataMap["status"]; ok {
+		supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "status")
+		supplierValues = fmt.Sprintf("%s,\"%s\"", supplierValues, val)
+	}
+	supplierColumns = fmt.Sprintf("%s,%s", supplierColumns, "updated_at")
+	supplierValues = fmt.Sprintf("%s,%s", supplierValues, `NOW()`)
+	supplierColumns = cleanUp(supplierColumns)
+	supplierValues = cleanUp(supplierValues)
+	return supplierId, supplierColumns, supplierValues
+}
+
+//This function gets the sql fror insertion in country table in mysql
+func getCountryQuery(dataMap map[string]interface{}) string {
+	var countryValue string
+	if val, ok := dataMap["cntryCode"]; ok {
+		countryValue = fmt.Sprintf("\"%s\"", val)
+	}
+	return countryValue
+}
+
+//This function cleans up the sql formed for any leading or lagging extra ""
+func cleanUp(str string) string {
+	str = strings.Replace(str, ",", "", 1)
+	return str
+}
+
+//generates insert query for catalog_supplier table
+func getInsertCatalogSupplierQuery(suppCol string, suppVal string) string {
+	suppCol = fmt.Sprintf("%s,%s", suppCol, "created_at")
+	suppVal = fmt.Sprintf("%s,%s", suppVal, `NOW()`)
+	return fmt.Sprintf("%s (%s) VALUES (%s)", "INSERT INTO catalog_supplier", suppCol, suppVal)
+}
+
+//generates insert query for country table
+func getInsertCountryQuery(countryVal string) string {
+	return fmt.Sprintf("%s (%s) VALUES (%s)", "INSERT INTO country ", "iso2_code", countryVal)
+}
+
+//generates insert query for supplier_address table
+func getInsertSupplierAddressQuery(addrCol string, addrVal string, supInsId int64, countryInsId int64) string {
+	//append both the inserted ids as relevant fks
+	addrCol = fmt.Sprintf("%s,%s", addrCol, "created_at")
+	addrCol = fmt.Sprintf("%s,%s", addrCol, "fk_id_catalog_supplier")
+	addrCol = fmt.Sprintf("%s,%s", addrCol, "fk_country")
+	addrVal = fmt.Sprintf("%s,%s", addrVal, `NOW()`)
+	addrVal = fmt.Sprintf("%s,%d", addrVal, supInsId)
+	addrVal = fmt.Sprintf("%s,%d", addrVal, countryInsId)
+	return fmt.Sprintf("%s (%s) VALUES (%s)", "INSERT INTO supplier_address", addrCol, addrVal)
+}
+
+//generates update query for catalog_supplier table
+func getUpdateCatalogSupplierQuery(suppCol string, suppVal string, suppId int) string {
+	catSupSql := `UPDATE catalog_supplier SET `
+	suppColArr := strings.Split(suppCol, ",")
+	suppValArr := strings.Split(suppVal, ",")
+	var suppValNew string
+	for k, _ := range suppColArr {
+		suppValNew = fmt.Sprintf("%s,%s=%v", suppValNew, suppColArr[k], suppValArr[k])
+	}
+	suppValNew = cleanUp(suppValNew)
+	return fmt.Sprintf("%s %s WHERE id_catalog_supplier = %d", catSupSql, suppValNew, suppId)
+}
+
+//generates update query for supplier_address table
+func getUpdateSupplierAddressQuery(addrCol string, addrVal string, suppId int) string {
+	supAddrSql := `UPDATE supplier_address SET `
+	addrColArr := strings.Split(addrCol, ",")
+	addrValArr := strings.Split(addrVal, ",")
+	var addrValNew string
+	for k, _ := range addrColArr {
+		addrValNew = fmt.Sprintf("%s,%s=%v", addrValNew, addrColArr[k], addrValArr[k])
+	}
+	addrValNew = cleanUp(addrValNew)
+	return fmt.Sprintf("%s %s WHERE fk_id_catalog_supplier = %d", supAddrSql, addrValNew, suppId)
+}
+
+//generates sql for getting country id
+func getCountryIdQuery(suppId int) string {
+	countryIdSql := `SELECT fk_country FROM supplier_address WHERE fk_id_catalog_supplier`
+	return fmt.Sprintf("%s=%d", countryIdSql, suppId)
+}
+
+//generates update query for country table
+func getUpdateCountryQuery(countryVal string, countryId int) string {
+	countrySql := `UPDATE country SET iso2_code`
+	return fmt.Sprintf("%s=%s WHERE id_country =%d", countrySql, countryVal, countryId)
+}
+
+//This function invalidates products cache for updated sellers by
+// preparing data and calling styloko products api
+func InvalidateProductsForUpdatedSellers(data interface{}) error {
+	res := data.([]Schema)
+	slrData := prepareSellerData(res)
+	err := sendDataToProdApi(slrData)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while sending data to product API :%s", err.Error()))
+		return err
+	}
+	return nil
+}
+
+//This function prepeares seller data for consumption by styloko products api
+func prepareSellerData(res []Schema) []SellerData {
+	slrData := make([]SellerData, 0)
+	for k, _ := range res {
+		tmp := SellerData{}
+		tmp.Value = strconv.Itoa(res[k].SeqId)
+		tmp.Type = "seller"
+		slrData = append(slrData, tmp)
+	}
+	return slrData
+}
+
+//This function sends passed data to styloko product api
+func sendDataToProdApi(slrData []SellerData) error {
+	jsonData, err := json.Marshal(slrData)
+	if err != nil {
+		logger.Error("Error while marshalling request", err)
+		return err
+	}
+	logger.Info(fmt.Sprintf("Json Data sent to Orchestrator:%s", string(jsonData)))
+	config := config.ApplicationConfig.(*appconfig.AppConfig)
+	headers := make(map[string]string)
+	headers["Update-Type"] = "Cache"
+	t, err := time.ParseDuration(config.Styloko.Timeout)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while converting timeout to time.Duration: %s", err.Error()))
+		return err
+	}
+	resp, err := http.HttpPut(config.Styloko.Url, headers, string(jsonData), t*time.Millisecond)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error while sending POST Request %s", err.Error()))
+		return err
+	}
+	logger.Info(fmt.Sprintf("Response from Styloko Product API %s", string(resp.Body)))
+	return nil
+}

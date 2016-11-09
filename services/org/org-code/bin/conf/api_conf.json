@@ -1,0 +1,67 @@
+{
+  "Cache": {
+    "Platform": "centralCache",
+    "Host": "http://blitz:8080",
+    "KeyPrefix": "cache/api/v1/buckets/org",
+    "Disabled": false,
+    "Timeout":100
+  },
+  "ResponseHeaders": {
+    "CacheControl": {
+      "ResponseType": "public",
+      "NoCache": true,
+      "NoStore": false,
+      "MaxAgeInSeconds": 300
+    }
+  },
+  "MySqlConfig": {
+    "Master": {
+      "DriverName":"mysql",
+      "Username":"MASTER_USERNAME",
+      "Password" : "MASTER_PASSWORD",
+      "Host" : "MASTER_HOST",
+      "Port" : "3306",
+      "Dbname" : "MASTER_DBNAME",
+      "Timezone" : "Asia/Kolkata",
+      "MaxOpenCon" : 0,
+      "MaxIdleCon" : 0
+    },
+    "Slave": {
+      "DriverName":"mysql",
+      "Username":"SLAVE_USERNAME",
+      "Password" : "SLAVE_PASSWORD",
+      "Host" : "SLAVE_HOST",
+      "Port" : "3306",
+      "Dbname" : "SLAVE_DBNAME",
+      "Timezone" : "Asia/Kolkata",
+      "MaxOpenCon" : 0,
+      "MaxIdleCon" : 0
+    }
+  },
+  "ScSlaveConfig":{
+      "DriverName":"mysql",
+      "Username":"SC_USERNAME",
+      "Password" : "SC_PASSWORD",
+      "Host" : "SC_HOST",
+      "Port" : "3307",
+      "Dbname" : "SC_DBNAME",
+      "Timezone" : "Asia/Kolkata",
+      "MaxOpenCon" : 0,
+      "MaxIdleCon" : 0
+    },
+  "MongoDbConfig": {
+    "Url":"MONGO_CONNECTION_URL",
+    "Dbname":"MONGO_DBNAME"
+  },
+  "Erp" : {
+    "Url" : "ERP_URL"
+  },
+  "Styloko" : {
+    "Url":"STYLOKO_PRODUCT_URL"
+  },
+  "Datadog":{
+    "APIKey":"239cb79c7f1afddb0f60e7363ce0c53a",
+    "AppKey":"735d8dbb85bc4b38eb9486c2ef9812f2c5a38e36"
+  },
+ "NotifAddr":"NOTIF_ADDR"
+}

@@ -1,0 +1,19 @@
+{
+    "ProfilerEnabled": true,
+    "LogLevel": {LOGLEVEL},
+    "DefaultLogType": "fileLoggerDefault",
+    "AppName" : "org-",
+    "FormatType" : "json",
+    "FileLogger": [
+        {
+            "Key": "fileLoggerDefault",
+            "Path": "/var/log/org/",
+            "FileNamePrefix": "api-"       
+        },
+        {
+            "Key": "cacheError",
+            "Path": "/var/log/org/",
+            "FileNamePrefix": "api-cache-"            
+        }        
+    ]
+}
